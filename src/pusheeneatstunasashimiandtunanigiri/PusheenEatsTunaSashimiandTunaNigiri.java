@@ -17,6 +17,8 @@ public class PusheenEatsTunaSashimiandTunaNigiri {
 	static HashSet<Position> next=new HashSet<Position>();
 	static HashSet<Position> avoid=new HashSet<Position>();
 	static HashSet<Point>wind=new HashSet<Point>();
+	static HashMap<Point,Integer> findMaxCache=new HashMap<Point,Integer>();
+	static HashSet<Position> history=new HashSet<Position>();
 	
 	public static void main(String[] args) {
 		X=in.nextInt();
@@ -51,8 +53,11 @@ public class PusheenEatsTunaSashimiandTunaNigiri {
 			
 			next=new HashSet<Position>();
 			for(Position p:current) {
-				reachEnd=AddNext(p);
-				if (reachEnd) break;
+				if (!history.contains(p)) {
+					history.add(p);
+					reachEnd=AddNext(p);
+					if (reachEnd) break;
+				}
 			}
 			current= next;
 			t++;
@@ -63,8 +68,10 @@ public class PusheenEatsTunaSashimiandTunaNigiri {
 		
 		if (aboutToReachEnd(p))
 			return true;
+		
+		
 		int x,y;
-		// No speed change
+		// No speed change 
 		x=p.x+p.vx;
 		y=p.y+p.vy;
 		if(x>=0&&x<=X&&y>=0&&y<=Y&&notWind(p.x,p.y,x,y)) {
@@ -133,32 +140,23 @@ public class PusheenEatsTunaSashimiandTunaNigiri {
 	public static boolean notWind(int XS,int YS,int XE, int YE) {
 		int Xdistance=XE-XS;
 		int Ydistance=YE-YS;
+		
 		if(Xdistance==0&&Ydistance==0) {
 			return true;
 		}
-		else if(Ydistance==0) {
-			int x=XS;
-			int xplus=(Xdistance>0?1:-1);
-			while(x!=XE) {
-				x+=xplus;
-				Point checkpoint=new Point(x,YS);
-				if(wind.contains(checkpoint))
-					return false;
-			}
+		int xplus,yplus;
+		if(Ydistance==0) {
+			xplus=(Xdistance>0?1:-1);
+			yplus=0;
 		}
 		else if(Xdistance==0) {
-			int y=YS;
-			int yplus=(Ydistance>0?1:-1);
-			while(y!=XE) {
-				y+=yplus;
-				Point checkpoint=new Point(XS,y);
-				if(wind.contains(checkpoint))
-					return false;
-			}
+			yplus=(Ydistance>0?1:-1);
+			xplus=0;
+		} else {
+			int Max=findMax(Xdistance,Ydistance);
+			xplus=Xdistance/Max;
+			yplus=Ydistance/Max;
 		}
-		int Max=findMax(Xdistance,Ydistance);
-		int xplus=Xdistance/Max;
-		int yplus=Ydistance/Max;
 		int x=XS;
 		int y=YS;
 		while(x!=XE&&y!=YE) {
@@ -176,10 +174,12 @@ public class PusheenEatsTunaSashimiandTunaNigiri {
 	public static int findMax(int a, int b) {
 		int x=Math.max(Math.abs(a), Math.abs(b));
 		int y=Math.min(Math.abs(a), Math.abs(b));
-		int f,l;
+		Point key=new Point(x,y);
+		if (findMaxCache.containsKey(key))
+			return findMaxCache.get(key);
+		int l;
 		while(y!=0) {
-			f=x/y;
-			l=x-f*y;
+			l=x%y;
 			x=y;
 			y=l;
 		}
